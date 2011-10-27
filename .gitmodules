@@ -1,0 +1,3 @@
+[submodule "clu"]
+	path = clu
+	url = git://gitorious.org/~paxswill/clu/paxswills-clu.git

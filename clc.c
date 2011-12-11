@@ -1,7 +1,13 @@
 #include <stdio.h>
+#include <string.h>
 #include "clu.h"
 
 int main(int argc, char ** argv ){
+	// Check number of arguments
+	if(argc < 2){
+		printf("Usage: clc program.cl [compiler options]\n");
+		exit(1);
+	}
 	cl_int ret = CL_SUCCESS;
 	// Get a platform
 	cl_platform_id platform;
@@ -35,8 +41,46 @@ int main(int argc, char ** argv ){
 		exit(1);
 	}
 	// Build the program
+	// String any options together
 	char *options = NULL;
-	options = "-cl-nv-verbose";
+	if(argc > 2){
+		int totalSize = 0;
+		for(int i = 0; i < (argc - 2); i++){
+			totalSize += strlen(argv[2 + i]) + 1;
+		}
+		totalSize++;
+		options = malloc(totalSize);
+		char *current = options;
+		for(int i = 0; i < (argc - 2); i++){
+			int size = strlen(argv[2 + i]);
+			strcpy(current, argv[2 + i]);
+			current[size] = ' ';
+			current += size + 1;	
+		}
+		options[totalSize] = '\0';
+	}
+	// Enable verbose mode on Nvidia platforms that support it
+	char *extensions;
+	size_t extensionsSize;
+	ret = clGetPlatformInfo(platform, CL_PLATFORM_EXTENSIONS, 0, NULL, &extensionsSize);
+	extensions = malloc(extensionsSize + 1);
+	ret = clGetPlatformInfo(platform, CL_PLATFORM_EXTENSIONS, extensionsSize, extensions, NULL);
+	extensions[extensionsSize] = '\0';
+	if(strstr(extensions, "cl_nv_compiler_options") != NULL){
+		int optionsSize = 0;
+		if(options != NULL){
+			optionsSize = strlen(options);
+		}
+		char *newOptions = malloc(optionsSize + 14 + 2);
+		if(options != NULL){
+			strcpy(newOptions, options);
+		}
+		strcpy(newOptions + optionsSize + 1, "-cl-nv-verbose");
+		newOptions[optionsSize] = ' ';
+		options = newOptions;
+	}
+	// Actually compile
+	printf("Compile options:\n%s\n", options);
 	ret = clBuildProgram(program, 1, &device, options, NULL, NULL);
 	if(ret != CL_SUCCESS){
 		fprintf(stderr, "OpenCL Error: %s\n", cluGetErrorString(ret));

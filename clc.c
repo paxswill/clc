@@ -35,7 +35,9 @@ int main(int argc, char ** argv ){
 		exit(1);
 	}
 	// Build the program
-	ret = clBuildProgram(program, 1, &device, NULL, NULL, NULL);
+	char *options = NULL;
+	options = "-cl-nv-verbose";
+	ret = clBuildProgram(program, 1, &device, options, NULL, NULL);
 	if(ret != CL_SUCCESS){
 		fprintf(stderr, "OpenCL Error: %s\n", cluGetErrorString(ret));
 		size_t logSize;
